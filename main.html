@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Student Enrollment Form</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <h2>Student Enrollment Form</h2>
+    <form id="studentForm" method="post">
+        <div class="form-group">
+            <span><label for="rollNo">Roll No:</label> <label id="rollNoMsg"></label></span>
+            <input type="text" class="form-control" name="rollNo" id="rollNo" placeholder="Enter Roll No" required>
+        </div>
+        <div class="form-group">
+            <label for="fullName">Full Name:</label>
+            <input type="text" class="form-control" id="fullName" placeholder="Enter Full Name" name="fullName" required disabled>
+        </div>
+        <div class="form-group">
+            <label for="class">Class:</label>
+            <input type="text" class="form-control" id="class" placeholder="Enter Class" name="class" required disabled>
+        </div>
+        <div class="form-group">
+            <label for="birthDate">Birth Date:</label>
+            <input type="date" class="form-control" id="birthDate" placeholder="Enter Birth Date" name="birthDate" required disabled>
+        </div>
+        <div class="form-group">
+            <label for="address">Address:</label>
+            <input type="text" class="form-control" id="address" placeholder="Enter Address" name="address" required disabled>
+        </div>
+        <div class="form-group">
+            <label for="enrollmentDate">Enrollment Date:</label>
+            <input type="date" class="form-control" id="enrollmentDate" placeholder="Enter Enrollment Date" name="enrollmentDate" required disabled>
+        </div>
+        <input type="button" class="btn btn-primary" id="studentSave" value="Save" onclick="saveStudent();" disabled>
+        <input type="button" class="btn btn-primary" id="studentUpdate" value="Update" onclick="updateStudent();" disabled>
+        <input type="button" class="btn btn-secondary" id="studentReset" value="Reset" onclick="resetForm();">
+    </form>
+</div>
+
+<script>
+    function executeCommand(reqString, dbBaseUrl, apiEndPointUrl) {
+        var url = dbBaseUrl + apiEndPointUrl;
+        var jsonObj;
+
+        // Perform the AJAX POST request
+        $.ajax({
+            url: url,
+            type: "POST",
+            data: reqString,
+            async: false,  // Synchronous call for easier debugging
+            success: function(result) {
+                jsonObj = JSON.parse(result);
+            },
+            error: function(xhr) {
+                jsonObj = JSON.parse(xhr.responseText);
+            }
+        });
+
+        return jsonObj;
+    }
+
+    $("#rollNo").on('change', function () {
+        var rollNoVar = $("#rollNo").val();
+        if (rollNoVar === "") {
+            resetForm();
+            return;
+        }
+
+        // Create GET request to check if Roll No exists
+        var getReqStr = createGETRequest("90932098|-31949221509305033|90962047", "SCHOOL_DB", "STUDENT_TABLE", rollNoVar);
+        var resultObj = executeCommand(getReqStr, "http://api.login2explore.com:5577", "/api/irl");
+
+        console.log("Result Object:", resultObj);  // Debugging output
+
+        if (resultObj && resultObj.status === 200 && resultObj.data && resultObj.data.length > 0) { 
+            // Record exists
+            var record = resultObj.data[0];
+            $("#fullName").val(record.fullName);
+            $("#class").val(record.class);
+            $("#birthDate").val(record.birthDate);
+            $("#address").val(record.address);
+            $("#enrollmentDate").val(record.enrollmentDate);
+
+            enableFormFields();
+            $("#studentUpdate").prop('disabled', false);  // Enable Update button
+            $("#studentSave").prop('disabled', true);  // Disable Save button
+        } else {
+            // No record found, enable form fields for new entry
+            enableFormFields();
+            $("#studentSave").prop('disabled', false);  // Enable Save button
+            $("#studentUpdate").prop('disabled', true);  // Disable Update button
+        }
+    });
+
+    function resetForm() {
+        $("#rollNo").val("");
+        $("#fullName").val("");
+        $("#class").val("");
+        $("#birthDate").val("");
+        $("#address").val("");
+        $("#enrollmentDate").val("");
+        $("#rollNo").focus();
+
+        disableFormFields();
+        $("#studentSave").prop('disabled', true);
+        $("#studentUpdate").prop('disabled', true);
+    }
+
+    function enableFormFields() {
+        $("#fullName").prop('disabled', false);
+        $("#class").prop('disabled', false);
+        $("#birthDate").prop('disabled', false);
+        $("#address").prop('disabled', false);
+        $("#enrollmentDate").prop('disabled', false);
+    }
+
+    function disableFormFields() {
+        $("#fullName").prop('disabled', true);
+        $("#class").prop('disabled', true);
+        $("#birthDate").prop('disabled', true);
+        $("#address").prop('disabled', true);
+        $("#enrollmentDate").prop('disabled', true);
+    }
+</script>
+</body>
+</html>
